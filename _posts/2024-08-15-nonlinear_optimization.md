@@ -3,7 +3,7 @@ title: Nonlinear Optimization Methods
 date: 2024-08-15 20:52:00 +0900
 categories: [theory, mathematics]
 tags: [gradient descent, gauss newton, levenberg marquardt, lm, nonlinear, least squares, optimization]     # TAG names should always be lowercase
-description: A review of nonlinear least squares optimization methods used in computer vision problems.
+description: Nonlinear least squares optimization methods used in computer vision problems.
 math: true
 ---
 
@@ -26,6 +26,7 @@ $$∇f_{i} = \frac{\partial {f}}{\partial{x_i}},$$
 
 $$∇f: \mathbb{R}^n \to \mathbb{R}^n, f: \mathbb{R}^n \to \mathbb{R}.$$
 
+For convenience though, let's treat the gradient vector as a column vector: $$∇f \in \mathbb{R}^{n\times 1}$$.
 
 #### Jacobian
 Jacobian on the other hand, is defined over a **vector-valued** differentiable function $$\boldsymbol{f}$$ (notice the notation is now bold). As was in gradient, it's just an array of all its partial derivatives, but this time it forms a matrix, because the output domain is not a scalar but a vector. Say that the $$\boldsymbol{f}$$ depends on $$n$$ variables, and it maps those variables to an $$m$$ dimensional vector. Then, the Jacobian $$J$$ of $$\boldsymbol{f}$$ is an $$m\times n$$ matrix. 
@@ -44,7 +45,11 @@ $$H_{i,j} = \frac{\partial^2 f}{\partial x_i \, \partial x_j},$$
 
 $$H \in \mathbb{R}^{n \times n}, f: \mathbb{R}^n \to \mathbb{R}.$$
 
-#### Taylor Expansion of a Multivariable Function
+Also note that the Hessian is equal to the jacobian of the gradient of $$f$$:
+
+$$\mathbf{H}(f(\mathbf{x})) = \mathbf{J}(\nabla f(\mathbf{x})).$$
+
+#### Taylor Expansion of a Multivariable Scalar Function
 
 The second-order Taylor expansion of a multivariable scalar function $$f$$, can be written compactly using Jacobian and Hessian of $$f$$. That is:
 
@@ -60,7 +65,25 @@ $$\mathbf{x}_{k+1} = \mathbf{x}_k - \alpha \nabla f(\mathbf{x}_k).$$
 where $$\alpha$$ is a learning rate.
 
 ### Newton-Raphson Method
-Before talking about Gauss-Newton method, we first need to understand Newton-Raphson method. 
+Before talking about Gauss-Newton method, we first need to understand Newton-Raphson method. The Newton-Raphson method is not a nonlinear optimization method, but it's a method to find a root of a scalar function $$f$$ (a solution of $$f(x) = 0$$). For optimization though, this method can be applied onto $$∇f$$, to find a critical point of $$f$$. 
+
+The original Newton-Raphson method for a single-variable, scalar function looks like this:
+
+$$x_{n+1} = x_{n} - \frac{f(x_{n})}{f'(x_{n})}.$$
+
+For the generalization to a multivariable, vector-valued function $$\boldsymbol{f}$$, it looks like the formulation only exists when the input dimension is the same as the output dimension ($$\boldsymbol{f}: \mathbb{R}^k \to \mathbb{R}^k$$):
+
+$$\mathbf{x}_{n+1} = \mathbf{x}_{n} - J_{F}(\mathbf{x}_{n})^{-1} F(\mathbf{x}_{n}).$$
+
+It makes sense because for a Jacobian to be invertible, it should be a square matrix. What about pseudo-inverse for a non-square Jacobian? I don't really know what will happen then (I am also curious, but it's just not really important for computer vision guys).
+
+For a least-squares optimization purpose, we are only concerned of a scalar-valued function $$f$$. We are applying the method onto $$∇f$$, which is now a vector-valued function. Then, the method would go like:
+
+$$\mathbf{x}_{n+1} = \mathbf{x}_{n} - J_{∇f}(\mathbf{x}_{n})^{-1} ∇f(\mathbf{x}_{n}).$$
+
+However, we mentioned before that the Jacobian of the gradient of $$f$$ is equal to the Hessian of $$f$$. Therefore, the nonlinear optimization using Newton-Raphson method can be expressed using the Hessian of $$f$$ as follows.
+
+$$\mathbf{x}_{n+1} = \mathbf{x}_{n} - H_{f}(\mathbf{x}_{n})^{-1} ∇f(\mathbf{x}_{n}).$$
 
 ### Gauss-Newton Method
 
