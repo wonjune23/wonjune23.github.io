@@ -10,7 +10,7 @@ math: true
 ### Introduction
 
 I mean, you can simply use `scipy.optimize`, `torch`, or `ceres-solver`, to solve a nonlinear optimization problem. So, why bother studying these?
-It's because as a *professional* computer vision engineer, you sometimes need to tackle the core of these optimization techniques: maybe your team implemented their own optimization library, and you need to handle errors in it (true story). To do so, the underlying, fundamental knowledge about this topic is required.
+It's because as a *professional* computer vision engineer, you sometimes need to tackle the core of these optimization techniques: maybe your team implemented their own optimization library, and you need to handle errors in it (true story). To do so, the underlying, fundamental knowledge about the topic is required.
 
 Now, there are basically 3 optimization techniques that we commonly encounter in this field: gradient descent (and a whole bunch of its variants - I will not talk much about this guy in this post), Gauss-Newton method, and Levenberg-Marquardt (LM) method. I've seen someone using `BFGS`, but I'd argue that it's really a rare case in this field.
 
@@ -29,10 +29,10 @@ Now, you can clearly see these individual residuals, when collected as a whole, 
 
 $$S = \sum_{i=1}^{n} r_{i}^{2}.$$
 
-it is now a **scalar**, even if each individual residual was actually a vector (and it's again just the sum of all its elements). So, when we are solving least-squares optimization problem, we are essentially optimizing our parameters based on a **scalar-valued function**. In other words, this scalar function acts as a projection of the information of what we want our model to fit to.
+it is now a **scalar**, even if each individual residual was actually a vector. So, when we are solving least-squares optimization problem, we are essentially optimizing our parameters based on a **scalar-valued function**. In other words, this scalar function acts as a projection of the information of what we want our model to fit to.
 
 #### Gradient
-Now let's see what the mathematical definition of these *technical* terms. Mathematically, gradient is defined over a **scalar-valued** differentiable function $$f$$ that depends on $$n$$ variables (note that the $$f$$ and $$n$$ here has nothing to do with the previous ones). The gradient $$∇f$$ is then a vector field **(vector-valued function)**, that represents the direction and the rate of steepest slope of $$f$$ at a given point. You know, it's just an array of partial derivatives of $$f$$.
+Now let's see what the mathematical definition of these *technical* terms. Mathematically, gradient is defined over a **scalar-valued** differentiable function $$f$$ that depends on $$n$$ variables (note that the $$f$$ and $$n$$ here has nothing to do with the previous ones - I will abuse notations a lot!). The gradient $$∇f$$ is then a vector field **(vector-valued function)**, that represents the direction and the rate of steepest slope of $$f$$ at a given point. You know, it's just an array of partial derivatives of $$f$$.
 
 $$∇f_{i} = \frac{\partial {f}}{\partial{x_i}},$$
 
@@ -41,11 +41,11 @@ $$∇f: \mathbb{R}^n \to \mathbb{R}^n, f: \mathbb{R}^n \to \mathbb{R}.$$
 For convenience though, let's treat the gradient vector as a column vector: $$∇f \in \mathbb{R}^{n\times 1}$$.
 
 #### Jacobian
-Jacobian on the other hand, is defined over a **vector-valued** differentiable function $$\boldsymbol{f}$$ (notice the notation is now bold). As was in gradient, it's just an array of all its partial derivatives, but this time it forms a matrix, because the output domain is not a scalar but a vector. Say that the $$\boldsymbol{f}$$ depends on $$n$$ variables, and it maps those variables to an $$m$$ dimensional vector. Then, the Jacobian $$J$$ of $$\boldsymbol{f}$$ is an $$m\times n$$ matrix. 
-In other words, it's just a list of gradients of length $$m$$, where each gradient corresponds to each scalar element of the $$m$$ dimensional output vector.
+Jacobian on the other hand, is defined over a **vector-valued** differentiable function $$\boldsymbol{f}$$. As was in gradient, it's just an array of all its partial derivatives, but this time it forms a matrix, because the output domain of $$\boldsymbol{f}$$ is not a scalar but a vector. Say that the $$\boldsymbol{f}$$ depends on $$n$$ variables, and it maps those variables to an $$m$$ dimensional vector. Then, the Jacobian $$J$$ of $$\boldsymbol{f}$$ is an $$m\times n$$ matrix. 
+In other words, it's just a list of gradients of length $$m$$.
 
 
-$$J_{i,j} = \frac{\partial \boldsymbol{f}_i}{\partial{x_j}},$$
+$$J_{ij} = \frac{\partial \boldsymbol{f}_i}{\partial{x_j}},$$
 
 $$J \in \mathbb{R}^{m \times n}, \boldsymbol{f}: \mathbb{R}^n \to \mathbb{R}^m.$$
 
@@ -53,7 +53,7 @@ $$J \in \mathbb{R}^{m \times n}, \boldsymbol{f}: \mathbb{R}^n \to \mathbb{R}^m.$
 Hessian is again defined over a **scalar-valued** function $$f$$ depending on $$n$$ variables. The Hessian matrix $$H$$ of $$f$$ is a square matrix of shape $$n\times n$$ and it represents all the second-order partial derivatives of $$f$$, describing the local curvature of $$f$$. FYI, if all the second partial derivatives are continuous, then the $$H$$ is symmetric (well, so mathematicians say).
 
 
-$$H_{i,j} = \frac{\partial^2 f}{\partial x_i \, \partial x_j},$$
+$$H_{ij} = \frac{\partial^2 f}{\partial x_i \, \partial x_j},$$
 
 $$H \in \mathbb{R}^{n \times n}, f: \mathbb{R}^n \to \mathbb{R}.$$
 
@@ -99,4 +99,29 @@ $$\mathbf{x}_{n+1} = \mathbf{x}_{n} - H_{f}(\mathbf{x}_{n})^{-1} ∇f(\mathbf{x}
 
 ### Gauss-Newton Method
 
-Now, Gauss-Newton method is a nonlinear least-squares optimization method. To apply this method, the system must be overdetermined, as the Jacobian of residual should be invertible. 
+Now, Gauss-Newton method is a nonlinear least-squares optimization method. This method can be derived from the Newton-Raphson method. For least-squares optimization, the $$f = \sum_{i=1}^{n} r_{i}^{2}$$, and thus the gradient is:
+
+$$∇f_{i} =2\sum _{j=1}^{n}r_{j}{\frac {\partial r_{j}}{\partial x_{i}}}.$$
+
+or, using matrix notation, (where vectors are treated as column vectors):
+
+$$∇f = 2J_{r}^{\operatorname{T}}r.$$
+
+Again, the Hessian is equal to jacobian of gradient (or, just look at the definition of Hessian, it's just a matrix of all the second-order partial derivatives). Therefore:
+
+$$H_{ij}=2\sum _{k=1}^{n}\left({\frac {\partial r_{k}}{\partial x_{i}}}{\frac {\partial r_{k}}{\partial x_{j}}}+r_{k}{\frac {\partial ^{2}r_{k}}{\partial x_{i}\partial x_{j}}}\right).$$
+
+Now, if we approximate the Hessian by ignoring the second-order derivative term (assuming the second-order term is negligible), we have:
+
+$$H_{ij}\approx 2\sum _{k=1}^{n}J_{ik}J_{jk},$$ 
+
+using matrix notation, it is expressed as: 
+
+$$H\approx 2J_{r}^{\operatorname{T}}J_{r}.$$
+
+
+Now, look at the Newton-Raphson method for least-squares optimization (the one that involves $$H$$ and $$∇f$$). If we substitute these expressions we get the Gauss-Newton method:
+
+$$\mathbf{x}_{n+1}=\mathbf{x}_{n}-\left(J_{r}^{\operatorname{T}}J_{r}\right)^{-1}J_{r}^{\operatorname{T}}r\left(\mathbf{x}_{n}\right).$$
+
+Therefore, the Gaussn-Newton method is nothing but a Newton-Raphson method applied to the gradient of $$f$$, where the $$H$$ is approximated by ignoring its second-order derivative terms. Here, the system must not be underdetermined, otherwise, the $$(J_{r}^{\operatorname{T}}J_{r})$$ term is not invertible.
