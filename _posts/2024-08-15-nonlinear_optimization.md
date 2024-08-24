@@ -12,7 +12,7 @@ math: true
 I mean, you can simply use `scipy.optimize`, `torch`, or `ceres-solver`, to solve a nonlinear optimization problem. So, why bother studying these?
 It's because as a *professional* computer vision engineer, you sometimes need to tackle the core of these optimization techniques: maybe your team implemented their own optimization library, and you need to handle errors in it (true story). To do so, the underlying, fundamental knowledge about the topic is required.
 
-Now, there are basically 3 optimization techniques that we commonly encounter in this field: gradient descent (and a whole bunch of its variants - I will not talk much about this guy in this post), Gauss-Newton method, and Levenberg-Marquardt (LM) method. I've seen someone using `BFGS`, but I'd argue that it's really a rare case in this field.
+Now, there are basically 3 optimization techniques that we commonly encounter in this profession: gradient descent (and a whole bunch of its variants - I will not talk much about this guy in this post), Gauss-Newton method, and Levenberg-Marquardt (LM) method. I've seen someone using `BFGS`, but I'd argue that it's really a rare case in this field.
 
 Okay, cool, but, what really is the `gradient`? 
 What is the concrete, mathematical definition of `Jacobian` or `Hessian` that we've heard while learning these methods?
@@ -25,7 +25,7 @@ So the least squares problem is to find the optimal (learnable) parameters that 
 
 $$r_{i} = y_{i} - f(x_{i}).$$
 
-Now, you can clearly see these individual residuals, when collected as a whole, form a **vector**: $$(r_{1}, r_{2}, ..., r_{n})$$. Well, I mean, each residual could have been a vector already, but, let's not take that into account. Because our optimization target is the *sum of the squares of the residuals*:
+Now, you can clearly see these individual residuals, when collected as a whole, form a **vector**: $$(r_{1}, r_{2}, ..., r_{n})$$. Well, I mean, each residual could have been a vector already (as opposed to being a scalar), but, let's not take that into account. Because our optimization target is the *sum of the squares of the residuals*:
 
 $$S = \sum_{i=1}^{n} r_{i}^{2}.$$
 
@@ -99,6 +99,8 @@ $$\mathbf{x}_{n+1} = \mathbf{x}_{n} - H_{f}(\mathbf{x}_{n})^{-1} ∇f(\mathbf{x}
 
 ### Gauss-Newton Method
 
+#### Derivations
+
 Now, Gauss-Newton method is a nonlinear least-squares optimization method. This method can be derived from the Newton-Raphson method. For least-squares optimization, the $$f = \sum_{i=1}^{n} r_{i}^{2}$$, and thus the gradient is:
 
 $$∇f_{i} =2\sum _{j=1}^{n}r_{j}{\frac {\partial r_{j}}{\partial x_{i}}}.$$
@@ -124,4 +126,19 @@ Now, look at the Newton-Raphson method for least-squares optimization (the one t
 
 $$\mathbf{x}_{n+1}=\mathbf{x}_{n}-\left(J_{r}^{\operatorname{T}}J_{r}\right)^{-1}J_{r}^{\operatorname{T}}r\left(\mathbf{x}_{n}\right).$$
 
-Therefore, the Gaussn-Newton method is nothing but a Newton-Raphson method applied to the gradient of $$f$$, where the $$H$$ is approximated by ignoring its second-order derivative terms. Here, the system must not be underdetermined, otherwise, the $$(J_{r}^{\operatorname{T}}J_{r})$$ term is not invertible.
+Therefore, the Gaussn-Newton method is nothing but a Newton-Raphson method applied to the gradient of $$f$$, where the $$H$$ is approximated by ignoring its second-order derivative terms. 
+
+At this point, I must also mention another interpretation of the Gauss-Newton method. Note that the expression $$(J_{r}^{\operatorname{T}}J_{r})^{-1}J_{r}^\operatorname{T}$$ is actually a pesudo-inverse of the $${J_{r}}$$. The residual function can be linearly approximated such that: $$r_{n+1} \approx r_{n} + J_{r_{n}} \Delta$$, where $$\Delta = x_{n+1} - x_{n}$$. Minimizing the sum of the approximated residuals (which must be larger than or equal to zero), in terms of $$\Delta$$, is a linear least-squares problem that can be solved in a closed form. It is solved by setting it equal to zero and finding the (closest) solution using the pseudo-inverse. It gives the same Gauss-Newton equation.
+
+Therefore, the Gauss-Newton method can be interpreted in two different ways: 
+
+1. Linear approximation of the residual function and solving it in a closed form.
+2. Applying Newton-Raphson method onto the gradient of the residual function, while linearly approximating the Hessian matrix.
+
+Also note that this is a iterative method, and the equation (and thus the approximation as well) is applied iteratively.
+
+#### Analysis
+
+Now, let's see the properties of the method. The first thing we notice is that it does not contain the Hessian computation, but it only requires to compute a Jacobian. This saves a lot of computational resource, making this method much more efficient than the Newton-Raphson method. 
+
+Here, the system must not be underdetermined, otherwise, the $$(J_{r}^{\operatorname{T}}J_{r})$$ term is not invertible.
