@@ -1,5 +1,5 @@
 ---
-title: Nonlinear Optimization Methods
+title: The Fundamentals of Nonlinear Optimization Methods
 date: 2024-08-15 20:52:00 +0900
 categories: [theory, mathematics]
 tags: [gradient descent, gauss newton, levenberg marquardt, lm, nonlinear, least squares, optimization]     # TAG names should always be lowercase
@@ -9,7 +9,7 @@ math: true
 
 ### Introduction
 
-I mean, you can simply use `scipy.optimize`, `torch`, or `ceres-solver`, to solve a nonlinear optimization problem. So, why bother studying these?
+There are various tools like `scipy.optimize`, `torch`, or `ceres-solver`, to solve a nonlinear optimization problem. So, why bother studying the underlying mathematics?
 It's because as a *professional* computer vision engineer, you sometimes need to tackle the core of these optimization techniques: maybe your team implemented their own optimization library, and you need to handle errors in it (true story). To do so, the underlying, fundamental knowledge about the topic is required.
 
 Now, there are basically 3 optimization techniques that we commonly encounter in this profession: gradient descent (and a whole bunch of its variants - I will not talk much about this guy in this post), Gauss-Newton method, and Levenberg-Marquardt (LM) method. I've seen someone using `BFGS`, but I'd argue that it's really a rare case in this field.
@@ -141,4 +141,9 @@ Also note that this is a iterative method, and the equation (and thus the approx
 
 Now, let's see the properties of the method. The first thing we notice is that it does not contain the Hessian computation, but it only requires to compute a Jacobian. This saves a lot of computational resource, making this method much more efficient than the Newton-Raphson method. 
 
-Here, the system must not be underdetermined, otherwise, the $$(J_{r}^{\operatorname{T}}J_{r})$$ term is not invertible.
+Also, the system must not be underdetermined, because otherwise, the $$(J_{r}^{\operatorname{T}}J_{r})$$ term gets singular, and thus is not invertible. In other words, the Gauss-Newton method is an effective method for solving an overdetermined system (just like when we're bundle adjusting!).
+Another thing to keep in mind: just like Newton-Raphson method, when the initial point is not close enough, or when the $$(J_{r}^{\operatorname{T}}J_{r})$$ is ill-conditioned, the Gauss-Newton method might not converge at all.
+
+The Gauss-Newton method is quite a dangerous method to use in a real engineering problem, because there is nothing preventing from the $$(J_{r}^{\operatorname{T}}J_{r})$$ term to be singular. If you try to perform *e.g.,* `np.linalg.inv(J.T @ J)`, it will raise an error, and if you didn't handle this exception, your system will go down. Imagine your system was an autonomous driving vehicle, and this happened in a very rare case so you couldn't really handle it beforehands (partially, a true story)! It can bring a disaster real quick.
+
+### Levenberg-Marquardt Method
