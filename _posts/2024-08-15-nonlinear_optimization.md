@@ -153,7 +153,7 @@ Now, let's see the properties of the method. The first thing we notice is that i
 Also, the system must not be underdetermined, because otherwise, the $$(J_{r}^{\operatorname{T}}J_{r})$$ term gets singular, and thus is not invertible. In other words, the Gauss-Newton method is an effective method for solving an overdetermined system (just like when we're bundle adjusting!).
 Another thing to keep in mind: just like Newton-Raphson method, when the initial point is not close enough, or when the $$(J_{r}^{\operatorname{T}}J_{r})$$ is ill-conditioned, the Gauss-Newton method might not converge at all.
 
-The Gauss-Newton method is quite a dangerous method to use in a real engineering problem, because there is nothing preventing from the $$(J_{r}^{\operatorname{T}}J_{r})$$ term to be singular. If you try to perform *e.g.,* `np.linalg.inv(J.T @ J)`, it can raise an error, and if you didn't handle this exception beforehands, your system will go down (true story)! I mean, even if you did, there is just not much to do if you can't get the inverse.
+The Gauss-Newton method is quite a dangerous method to use in a real engineering problem, because there is nothing preventing from the $$(J_{r}^{\operatorname{T}}J_{r})$$ term being singular. If you try to perform *e.g.,* `np.linalg.inv(J.T @ J)`, it can raise an error, and if you didn't handle this exception beforehands, your system will go down! I mean, even if you did, there is just not much to do with this method if you can't get the inverse.
 
 ### Levenberg-Marquardt Method
 
@@ -165,7 +165,7 @@ As the $\lambda$ increases, it behaves more like the gradient descent (note that
 
 As of the value of $\lambda$, it is a parameter that is really up to the user, but normally it is chosen dynamically, mimicking trust region methods. Briefly speaking: if the current $\lambda$ does not reduce the overall cost function, you can either increase or decrease it based on a predefined criteria. The most common method is to set a pre-defined multiplication factor $\nu$, and you multiply the value to the $\lambda$, or divide by it, until you can find an appropriate value that actually reduces the cost function.
 
-One important property of this method is that, while $J_{r}^{\operatorname{T}}J_{r}$ is **positive semi-definite** (by construction), $(J_{r}^{\operatorname{T}}J_{r} + \lambda I)$ is actually **positive definite** (as opposed to being semi-). This means the resulting dampened matrix is always a full ranked matrix, or it is always invertible. This again means that `np.linalg.inv(J.T @ J + lambda * I)` will never raise `NotInvertibleError`!
+One important property of this method is that, while $J_{r}^{\operatorname{T}}J_{r}$ is **positive semi-definite** (by construction!), $(J_{r}^{\operatorname{T}}J_{r} + \lambda I)$ is actually **positive definite** (as opposed to being semi-). This means the resulting dampened matrix is always a full ranked matrix, or it is always invertible. Now, `np.linalg.inv(J.T @ J + lambda * I)` will never raise `NotInvertibleError`!
 
 Also note that the damping factor is not always $\lambda I$, but it can be something like $\lambda * diag(J_{r}^{\operatorname{T}}J_{r})$, for faster convergence.
 
