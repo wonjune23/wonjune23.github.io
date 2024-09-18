@@ -1,18 +1,18 @@
 ---
-title: The Fundamentals of Nonlinear Optimization Methods
-date: 2024-08-15 20:52:00 +0900
+title: Fundamentals of Nonlinear Optimization Methods
+date: 2024-09-17 01:15:00 +0900
 categories: [theory, mathematics]
 tags: [gradient descent, gauss newton, levenberg marquardt, lm, nonlinear, least squares, optimization]     # TAG names should always be lowercase
-description: Nonlinear least squares optimization methods used in computer vision problems.
+description: Mathematical foundations behind the nonlinear least squares optimization methods used in computer vision problems.
 math: true
 ---
 
 ### Introduction
 
 There are various tools like `scipy.optimize`, `torch`, or `ceres-solver`, to solve a nonlinear optimization problem. So, why bother studying the underlying mathematics?
-It's because as a *professional* computer vision engineer, you sometimes need to tackle the core of these optimization techniques: maybe your team implemented their own optimization library, and you need to handle errors in it (true story). To do so, the underlying, fundamental knowledge about the topic is required.
+It's because as a *professional* computer vision engineer, you sometimes need to tackle the core of these optimization techniques: maybe your team implemented their own optimization library, and *you* are the one who needs to handle errors in it (true story). To do so, the underlying, fundamental knowledge about the topic is required.
 
-Now, there are basically 3 optimization techniques that we commonly encounter in this profession: gradient descent (and a whole bunch of its variants - I will not talk much about this guy in this post), Gauss-Newton method, and Levenberg-Marquardt (LM) method. I've seen someone using `BFGS`, but I'd argue that it's really a rare case in this field.
+Now, there are basically three optimization techniques that we commonly encounter in computer vision problems: gradient descent (and a whole bunch of its variants - I will not talk much about this guy in this post), Gauss-Newton method, and Levenberg-Marquardt (LM) method. I've seen someone using other methods, but I'd argue that it's really a rare case in this field.
 
 Okay, cool, but, what really is the `gradient`? 
 What is the concrete, mathematical definition of `Jacobian` or `Hessian` that we've heard while learning these methods?
@@ -128,11 +128,20 @@ $$\mathbf{x}_{n+1}=\mathbf{x}_{n}-\left(J_{r}^{\operatorname{T}}J_{r}\right)^{-1
 
 Therefore, the Gaussn-Newton method is nothing but a Newton-Raphson method applied to the gradient of $$f$$, where the $$H$$ is approximated by ignoring its second-order derivative terms. 
 
-At this point, I must also mention another interpretation of the Gauss-Newton method. Note that the expression $$(J_{r}^{\operatorname{T}}J_{r})^{-1}J_{r}^\operatorname{T}$$ is actually a pesudo-inverse of the $${J_{r}}$$. The residual function can be linearly approximated such that: $$r_{n+1} \approx r_{n} + J_{r_{n}} \Delta$$, where $$\Delta = x_{n+1} - x_{n}$$. Minimizing the sum of the approximated residuals (which must be larger than or equal to zero), in terms of $$\Delta$$, is a linear least-squares problem that can be solved in a closed form. It is solved by setting it equal to zero and finding the (closest) solution using the pseudo-inverse. It gives the same Gauss-Newton equation.
+At this point, I must also mention another interpretation of the Gauss-Newton method. Note that the expression $$(J_{r}^{\operatorname{T}}J_{r})^{-1}J_{r}^\operatorname{T}$$ is actually a pesudo-inverse of the $${J_{r}}$$. The residual function can be linearly approximated such that: 
+
+$$r_{n+1} \approx r_{n} + J_{r_{n}} \Delta$$ 
+
+Where $$\Delta = x_{n+1} - x_{n}$$. We should minimize the sum of the approximated residuals (which must be larger than or equal to zero) in terms of $$\Delta$$:
+
+$$\operatorname*{argmin}_{\Delta} \left\{ \sum_{i=1}^{n} \left( r_i + (J_{r} \Delta)_i \right)^2 \right\}$$
+
+
+This is a linear least-squares problem that can be solved in a closed form. Note that it is a quadratic approximation of the cost function (sum of squared residuals) in terms of the $\Delta$. Because it is larger than or eqaual to zero, we set it equal to zero to find the best solution using the pseudo-inverse. It gives the same Gauss-Newton equation.
 
 Therefore, the Gauss-Newton method can be interpreted in two different ways: 
 
-1. Linear approximation of the residual function and solving it in a closed form.
+1. Linear approximation of the residual function (or, quadratic approximation of the cost function) and solving it in a closed form.
 2. Applying Newton-Raphson method onto the gradient of the residual function, while linearly approximating the Hessian matrix.
 
 Also note that this is a iterative method, and the equation (and thus the approximation as well) is applied iteratively.
@@ -144,6 +153,22 @@ Now, let's see the properties of the method. The first thing we notice is that i
 Also, the system must not be underdetermined, because otherwise, the $$(J_{r}^{\operatorname{T}}J_{r})$$ term gets singular, and thus is not invertible. In other words, the Gauss-Newton method is an effective method for solving an overdetermined system (just like when we're bundle adjusting!).
 Another thing to keep in mind: just like Newton-Raphson method, when the initial point is not close enough, or when the $$(J_{r}^{\operatorname{T}}J_{r})$$ is ill-conditioned, the Gauss-Newton method might not converge at all.
 
-The Gauss-Newton method is quite a dangerous method to use in a real engineering problem, because there is nothing preventing from the $$(J_{r}^{\operatorname{T}}J_{r})$$ term to be singular. If you try to perform *e.g.,* `np.linalg.inv(J.T @ J)`, it will raise an error, and if you didn't handle this exception, your system will go down. Imagine your system was an autonomous driving vehicle, and this happened in a very rare case so you couldn't really handle it beforehands (partially, a true story)! It can bring a disaster real quick.
+The Gauss-Newton method is quite a dangerous method to use in a real engineering problem, because there is nothing preventing from the $$(J_{r}^{\operatorname{T}}J_{r})$$ term to be singular. If you try to perform *e.g.,* `np.linalg.inv(J.T @ J)`, it can raise an error, and if you didn't handle this exception beforehands, your system will go down (true story)! I mean, even if you did, there is just not much to do if you can't get the inverse.
 
 ### Levenberg-Marquardt Method
+
+Levenberg-Marquardt (LM) method, is the de-facto standard for solving a 3D geometric computer vision problems, such as structure-from-motion. The algorithm adds a damping factor, $\lambda I$, to the Gauss-Newton equation:
+
+$$\mathbf{x}_{n+1}=\mathbf{x}_{n}-(J_{r}^{\operatorname{T}}J_{r} + \lambda I)^{-1}J_{r}^{\operatorname{T}}r\left(\mathbf{x}_{n}\right).$$
+
+As the $\lambda$ increases, it behaves more like the gradient descent (note that $J_{r}^{\operatorname{T}}r\left(\mathbf{x}_{n}\right)$ is proportional to the gradient of $f$), and otherwise, it behaves like the Gauss-Newton method.
+
+As of the value of $\lambda$, it is a parameter that is really up to the user, but normally it is chosen dynamically, mimicking trust region methods. Briefly speaking: if the current $\lambda$ does not reduce the overall cost function, you can either increase or decrease it based on a predefined criteria. The most common method is to set a pre-defined multiplication factor $\nu$, and you multiply the value to the $\lambda$, or divide by it, until you can find an appropriate value that actually reduces the cost function.
+
+One important property of this method is that, while $J_{r}^{\operatorname{T}}J_{r}$ is **positive semi-definite** (by construction), $(J_{r}^{\operatorname{T}}J_{r} + \lambda I)$ is actually **positive definite** (as opposed to being semi-). This means the resulting dampened matrix is always a full ranked matrix, or it is always invertible. This again means that `np.linalg.inv(J.T @ J + lambda * I)` will never raise `NotInvertibleError`!
+
+Also note that the damping factor is not always $\lambda I$, but it can be something like $\lambda * diag(J_{r}^{\operatorname{T}}J_{r})$, for faster convergence.
+
+### Conclusion
+
+In this post, I made a brief overview of the mathematical concepts behind the gradient descent, Gauss-Newton, and Levenberg-Marquardt methods. Personally, it was always tricky for me to comprehend the formulas when I had to use them, but now that I wrote this post, I could establish a concrete comprehension of the equations and the logics behind the methods. Wish this helps others who read this post as well!
