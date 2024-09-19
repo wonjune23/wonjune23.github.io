@@ -166,7 +166,7 @@ As $\lambda$ increases, it behaves more like the gradient descent (remember, $J_
 
 As of the value of $\lambda$, it is a parameter that is really up to a user, but normally it is chosen dynamically, mimicking trust region methods. Briefly speaking: if the current $\lambda$ does not reduce the overall cost function, you can either increase or decrease it based on a predefined criteria. The most common method is to set a pre-defined multiplication factor $\nu$ $(\nu > 0)$, and you multiply it to $\lambda$, or divide by it, until you can find an appropriate value that efficiently reduces the cost function.
 
-One important property of this method is that, while $J_{r}^{\operatorname{T}}J_{r}$ is **positive semi-definite** (by construction!), $(J_{r}^{\operatorname{T}}J_{r} + \lambda I)$ is actually **positive definite** (as opposed to being semi-). This means the resulting dampened matrix is always a full ranked matrix and is always invertible. Now, `np.linalg.inv(J.T @ J + lambda * I)` will never raise `NotInvertibleError`!
+One important property of this method is that, while $J_{r}^{\operatorname{T}}J_{r}$ is **positive semi-definite** (by construction!), $(J_{r}^{\operatorname{T}}J_{r} + \lambda I)$ is actually **positive definite** (as opposed to being semi-). This means the resulting dampened matrix is always a full ranked matrix and is always invertible (why is that so? see <https://chatgpt.com/share/66ec6a5b-4c7c-800c-996f-9145450c9d65>). Now, `np.linalg.inv(J.T @ J + lambda * I)` will never raise `NotInvertibleError`!
 
 Also note that the damping factor is not always $\lambda I$, but it can be something like $\lambda * diag(J_{r}^{\operatorname{T}}J_{r})$, for faster convergence.
 
