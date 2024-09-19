@@ -128,23 +128,24 @@ $$\mathbf{x}_{n+1}=\mathbf{x}_{n}-\left(J_{r}^{\operatorname{T}}J_{r}\right)^{-1
 
 Therefore, the Gaussn-Newton method is nothing but a Newton-Raphson method applied to the gradient of $$f$$, where the $$H$$ is approximated by ignoring its second-order derivative terms. 
 
-At this point, I must also mention another interpretation of the Gauss-Newton method. Note that the expression $$(J_{r}^{\operatorname{T}}J_{r})^{-1}J_{r}^\operatorname{T}$$ is actually a pesudo-inverse of the $${J_{r}}$$. The residual function can be linearly approximated such that: 
+At this point, I must also mention another interpretation of the Gauss-Newton method. The residual function can be linearly approximated such that: 
 
 $$r_{n+1} \approx r_{n} + J_{r_{n}} \Delta$$ 
 
-Where $$\Delta = x_{n+1} - x_{n}$$. We should minimize the sum of the approximated residuals (which must be larger than or equal to zero) in terms of $$\Delta$$:
+Where $$\Delta = x_{n+1} - x_{n}$$. 
+
+As we should minimize the sum of the approximated residuals in terms of $$\Delta$$:
 
 $$\operatorname*{argmin}_{\Delta} \left\{ \sum_{i=1}^{n} \left( r_i + (J_{r} \Delta)_i \right)^2 \right\}$$
 
-
-This is a linear least-squares problem that can be solved in a closed form. Note that it is a quadratic approximation of the cost function (sum of squared residuals) in terms of the $\Delta$. Because it is larger than or eqaual to zero, we set it equal to zero to find the best solution using the pseudo-inverse. It gives the same Gauss-Newton equation.
+This is a linear least-squares problem that can be solved in a closed form. Note that it is a quadratic approximation of the cost function (sum of squared residuals) in terms of $\Delta$. Because it is of quadratic form, it is larger than or eqaual to zero. We thus set it equal to zero to find the best solution using the pseudo-inverse. It gives the same Gauss-Newton equation (Note that the expression $$(J_{r}^{\operatorname{T}}J_{r})^{-1}J_{r}^\operatorname{T}$$ is actually a pesudo-inverse of the $${J_{r}}$$).
 
 Therefore, the Gauss-Newton method can be interpreted in two different ways: 
 
 1. Linear approximation of the residual function (or, quadratic approximation of the cost function) and solving it in a closed form.
 2. Applying Newton-Raphson method onto the gradient of the residual function, while linearly approximating the Hessian matrix.
 
-Also note that this is a iterative method, and the equation (and thus the approximation as well) is applied iteratively.
+This is why we often see different interpretations of the method: some say it's a quadratic approximation, others says it's a linear approximation, but all of them are valid in their own ways. Also note that this is an iterative method, and the equation (and thus the approximation as well) is applied iteratively.
 
 #### Analysis
 
@@ -157,18 +158,18 @@ The Gauss-Newton method is quite a dangerous method to use in a real engineering
 
 ### Levenberg-Marquardt Method
 
-Levenberg-Marquardt (LM) method, is the de-facto standard for solving a 3D geometric computer vision problems, such as structure-from-motion. The algorithm adds a damping factor, $\lambda I$, to the Gauss-Newton equation:
+Levenberg-Marquardt (LM) method, is the de-facto standard for solving 3D geometric computer vision problems like bundle adjustment. The algorithm adds a damping factor, $\lambda I$ $(\lambda > 0)$, to the Gauss-Newton equation:
 
 $$\mathbf{x}_{n+1}=\mathbf{x}_{n}-(J_{r}^{\operatorname{T}}J_{r} + \lambda I)^{-1}J_{r}^{\operatorname{T}}r\left(\mathbf{x}_{n}\right).$$
 
-As the $\lambda$ increases, it behaves more like the gradient descent (note that $J_{r}^{\operatorname{T}}r\left(\mathbf{x}_{n}\right)$ is proportional to the gradient of $f$), and otherwise, it behaves like the Gauss-Newton method.
+As $\lambda$ increases, it behaves more like the gradient descent (remember, $J_{r}^{\operatorname{T}}r\left(\mathbf{x}_{n}\right)$ is proportional to the gradient of $f$), and otherwise, it behaves like the Gauss-Newton method.
 
-As of the value of $\lambda$, it is a parameter that is really up to the user, but normally it is chosen dynamically, mimicking trust region methods. Briefly speaking: if the current $\lambda$ does not reduce the overall cost function, you can either increase or decrease it based on a predefined criteria. The most common method is to set a pre-defined multiplication factor $\nu$, and you multiply the value to the $\lambda$, or divide by it, until you can find an appropriate value that actually reduces the cost function.
+As of the value of $\lambda$, it is a parameter that is really up to a user, but normally it is chosen dynamically, mimicking trust region methods. Briefly speaking: if the current $\lambda$ does not reduce the overall cost function, you can either increase or decrease it based on a predefined criteria. The most common method is to set a pre-defined multiplication factor $\nu$ $(\nu > 0)$, and you multiply it to $\lambda$, or divide by it, until you can find an appropriate value that efficiently reduces the cost function.
 
-One important property of this method is that, while $J_{r}^{\operatorname{T}}J_{r}$ is **positive semi-definite** (by construction!), $(J_{r}^{\operatorname{T}}J_{r} + \lambda I)$ is actually **positive definite** (as opposed to being semi-). This means the resulting dampened matrix is always a full ranked matrix, or it is always invertible. Now, `np.linalg.inv(J.T @ J + lambda * I)` will never raise `NotInvertibleError`!
+One important property of this method is that, while $J_{r}^{\operatorname{T}}J_{r}$ is **positive semi-definite** (by construction!), $(J_{r}^{\operatorname{T}}J_{r} + \lambda I)$ is actually **positive definite** (as opposed to being semi-). This means the resulting dampened matrix is always a full ranked matrix and is always invertible. Now, `np.linalg.inv(J.T @ J + lambda * I)` will never raise `NotInvertibleError`!
 
 Also note that the damping factor is not always $\lambda I$, but it can be something like $\lambda * diag(J_{r}^{\operatorname{T}}J_{r})$, for faster convergence.
 
 ### Conclusion
 
-In this post, I made a brief overview of the mathematical concepts behind the gradient descent, Gauss-Newton, and Levenberg-Marquardt methods. Personally, it was always tricky for me to comprehend the formulas when I had to use them, but now that I wrote this post, I could establish a concrete comprehension of the equations and the logics behind the methods. Wish this helps others who read this post as well!
+In this post, I made a brief overview of the mathematical concepts behind the gradient descent, Gauss-Newton, and Levenberg-Marquardt methods. I focused on the basic definitions of the mathematical terms and how the logics flow with those concepts. Personally, it was always tricky for me to comprehend the formulas when I had to use them, but now that I wrote this post, I could establish a concrete comprehension of the equations and the logics behind the methods. Wish it helps others who read this post as well!
